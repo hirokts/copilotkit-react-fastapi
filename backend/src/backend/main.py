@@ -1,5 +1,9 @@
 import random
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from ag_ui_langgraph import add_langgraph_fastapi_endpoint
 from copilotkit import LangGraphAGUIAgent
 from fastapi import FastAPI
@@ -23,7 +27,7 @@ add_langgraph_fastapi_endpoint(
     agent=LangGraphAGUIAgent(
         name="sample_agent",
         description="A helpful assistant agent.",
-        graph=mock_graph,  # Use mock_graph for testing purposes
+        graph=graph,
     ),
     path="/copilotkit",
 )
