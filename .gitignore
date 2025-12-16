@@ -1,0 +1,11 @@
+.env
+
+# Claude Code settings
+.mcp.json
+.claude/*
+!.claude/settings.json
+!.claude/agents/**
+!.claude/commands/**
+!.claude/skills/**
+
+node_modules/
