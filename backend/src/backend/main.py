@@ -1,8 +1,11 @@
 import random
 
+from ag_ui_langgraph import add_langgraph_fastapi_endpoint
+from copilotkit import LangGraphAGUIAgent
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from backend.agent import graph, mock_graph
 from backend.config import settings
 
 app = FastAPI()
@@ -13,6 +16,16 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+add_langgraph_fastapi_endpoint(
+    app=app,
+    agent=LangGraphAGUIAgent(
+        name="sample_agent",
+        description="A helpful assistant agent.",
+        graph=mock_graph,  # Use mock_graph for testing purposes
+    ),
+    path="/copilotkit",
 )
 
 GREETINGS = [
