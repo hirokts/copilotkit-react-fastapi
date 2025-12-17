@@ -5,16 +5,15 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from ag_ui.core import RunAgentInput
-from ag_ui.encoder import EventEncoder
 from copilotkit import LangGraphAGUIAgent
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from backend.agent import graph, joke_graph
 from backend.auth import verify_jwt
 from backend.config import settings
+from backend.copilotkit_handler import run_agent_with_state
 from backend.database import init_db
 from backend.services import get_user_profile
 
@@ -63,20 +62,12 @@ async def copilotkit_endpoint(
     user_id = verify_jwt(credentials.credentials)
     user_profile = get_user_profile(user_id)
 
-    input_data.state = {
-        **(input_data.state or {}),
-        "user_id": user_id,
-        "user_profile": user_profile,
-    }
-
-    accept_header = request.headers.get("accept")
-    encoder = EventEncoder(accept=accept_header)
-
-    async def event_generator():
-        async for event in agent.run(input_data):
-            yield encoder.encode(event)
-
-    return StreamingResponse(event_generator(), media_type=encoder.get_content_type())
+    return await run_agent_with_state(
+        agent=agent,
+        input_data=input_data,
+        request=request,
+        extra_state={"user_id": user_id, "user_profile": user_profile},
+    )
 
 
 @app.get("/copilotkit/{agent_name}/health")
