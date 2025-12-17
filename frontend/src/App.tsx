@@ -22,7 +22,13 @@ function App() {
   }
 
   return (
-    <CopilotKit runtimeUrl={import.meta.env.VITE_COPILOT_RUNTIME_URL} agent="sample_agent">
+    <CopilotKit
+      runtimeUrl={import.meta.env.VITE_COPILOT_RUNTIME_URL}
+      agent="sample_agent"
+      headers={{
+        Authorization: `Bearer ${import.meta.env.VITE_ACCESS_TOKEN}`,
+      }}
+    >
       <CopilotSidebar>
         <h1>Greetings App</h1>
         <div className="card">

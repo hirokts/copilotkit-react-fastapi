@@ -15,6 +15,8 @@ from typing_extensions import Literal
 
 class AgentState(CopilotKitState):
     tools: list[Any]
+    user_id: str | None = None
+    user_profile: dict | None = None
 
 
 @tool
@@ -48,7 +50,12 @@ async def chat_node(
     fe_tools = state.get("tools", [])
     model_with_tools = model.bind_tools([*fe_tools, *tools])
 
-    system_message = SystemMessage(content="You are a helpful assistant.")
+    user_profile = state.get("user_profile")
+    if user_profile:
+        system_content = f"You are a helpful assistant. User info: {user_profile}"
+    else:
+        system_content = "You are a helpful assistant."
+    system_message = SystemMessage(content=system_content)
 
     response = await model_with_tools.ainvoke(
         [system_message, *state["messages"]],

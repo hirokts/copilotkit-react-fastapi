@@ -8,6 +8,8 @@ class Settings(BaseSettings):
 
     cors_origins: str = "http://localhost:5173"
     openai_api_key: str = ""
+    jwt_secret: str = "dev-secret-key"
+    database_url: str = "postgresql://postgres:postgres@localhost:5432/app"
 
     @cached_property
     def cors_origins_list(self) -> list[str]:
