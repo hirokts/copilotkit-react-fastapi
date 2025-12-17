@@ -17,11 +17,15 @@ const corsOrigins = (process.env.CORS_ORIGINS || "http://localhost:5173")
 app.use(cors({ origin: corsOrigins, credentials: true }));
 
 const serviceAdapter = new ExperimentalEmptyAdapter();
+const backendUrl = process.env.BACKEND_URL || "http://localhost:8000";
 
 const runtime = new CopilotRuntime({
   agents: {
     sample_agent: new LangGraphHttpAgent({
-      url: process.env.AGENT_URL || "http://localhost:8000",
+      url: `${backendUrl}/copilotkit/sample_agent`,
+    }),
+    joke_agent: new LangGraphHttpAgent({
+      url: `${backendUrl}/copilotkit/joke_agent`,
     }),
   },
 });

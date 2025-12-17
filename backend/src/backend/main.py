@@ -7,12 +7,12 @@ load_dotenv()
 from ag_ui.core import RunAgentInput
 from ag_ui.encoder import EventEncoder
 from copilotkit import LangGraphAGUIAgent
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from backend.agent import graph
+from backend.agent import graph, joke_graph
 from backend.auth import verify_jwt
 from backend.config import settings
 from backend.database import init_db
@@ -30,11 +30,18 @@ app.add_middleware(
 
 security = HTTPBearer()
 
-agent = LangGraphAGUIAgent(
-    name="sample_agent",
-    description="A helpful assistant agent.",
-    graph=graph,
-)
+agents = {
+    "sample_agent": LangGraphAGUIAgent(
+        name="sample_agent",
+        description="A helpful assistant agent.",
+        graph=graph,
+    ),
+    "joke_agent": LangGraphAGUIAgent(
+        name="joke_agent",
+        description="A comedian agent that tells jokes.",
+        graph=joke_graph,
+    ),
+}
 
 
 @app.on_event("startup")
@@ -42,12 +49,17 @@ def startup_event():
     init_db()
 
 
-@app.post("/copilotkit")
+@app.post("/copilotkit/{agent_name}")
 async def copilotkit_endpoint(
+    agent_name: str,
     input_data: RunAgentInput,
     request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ):
+    agent = agents.get(agent_name)
+    if not agent:
+        raise HTTPException(status_code=404, detail=f"Agent '{agent_name}' not found")
+
     user_id = verify_jwt(credentials.credentials)
     user_profile = get_user_profile(user_id)
 
@@ -67,9 +79,22 @@ async def copilotkit_endpoint(
     return StreamingResponse(event_generator(), media_type=encoder.get_content_type())
 
 
-@app.get("/copilotkit/health")
-def copilotkit_health():
+@app.get("/copilotkit/{agent_name}/health")
+def copilotkit_health(agent_name: str):
+    agent = agents.get(agent_name)
+    if not agent:
+        raise HTTPException(status_code=404, detail=f"Agent '{agent_name}' not found")
     return {"status": "ok", "agent": {"name": agent.name}}
+
+
+@app.get("/copilotkit/agents")
+def list_agents():
+    return {
+        "agents": [
+            {"name": agent.name, "description": agent.description}
+            for agent in agents.values()
+        ]
+    }
 
 
 GREETINGS = [
